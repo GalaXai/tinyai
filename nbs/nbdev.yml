@@ -1,0 +1,9 @@
+project:
+  output-dir: _docs
+
+website:
+  title: "tinyai"
+  site-url: "https://GalaxUniv.github.io/tinyai"
+  description: ""
+  repo-branch: Main
+  repo-url: "https://github.com/GalaxUniv/tinyai"
