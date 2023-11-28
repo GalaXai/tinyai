@@ -72,25 +72,44 @@ def get_min(h):
     h1 = torch.stack(h.stats[2]).t().float()
     return h1[0]/h1.sum(0)
 
-# %% ../nbs/10_activations.ipynb 59
+# %% ../nbs/10_activations.ipynb 69
 class ActivationStats(HooksCallback):
     def __init__(self, mod_filter=fc.noop): super().__init__(append_stats, mod_filter)
 
     def color_dim(self, figsize=(11,5)):
-        fig,axes = get_grid(len(self), figsize=figsize)
-        for ax,h in zip(axes.flat, self):
-            show_image(get_hist(h), ax, origin='lower')
+        fig, axes = get_grid(len(self), figsize=figsize)
+        for layer, h in enumerate(self):
+            ax = axes.flat[layer]
+            im = ax.imshow(get_hist(h), origin='lower')  # Using imshow directly
+
+            # Add labels, title, and colorbar for clarity
+            ax.set_xlabel("Batch Number")
+            ax.set_ylabel("Activation Value")
+            ax.set_title(f"Layer {layer} Activations")
+            cbar = plt.colorbar(im, ax=ax)
+            cbar.set_label("Frequency")
+        plt.tight_layout()
 
     def dead_chart(self, figsize=(11,5)):
-        fig,axes = get_grid(len(self), figsize=figsize)
-        for ax,h in zip(axes.flatten(), self):
-            ax.plot(get_min(h))
+        fig, axes = get_grid(len(self), figsize=figsize)
+        for layer, h in enumerate(self):
+            ax = axes.flatten()[layer]
+            ax.plot(get_min(h), linewidth=3)
             ax.set_ylim(0,1)
+            ax.set_xlabel("Batch Number")
+            ax.set_ylabel("Activation Value")
+            ax.set_title(f"Layer {layer} Dead Activations")
+        plt.tight_layout()
 
     def plot_stats(self, figsize=(10,4)):
-        fig,axs = plt.subplots(1,2, figsize=figsize)
+        fig, axs = plt.subplots(1,2, figsize=figsize)
         for h in self:
-            for i in 0,1: axs[i].plot(h.stats[i])
+            for i in (0, 1):
+                axs[i].plot(h.stats[i])
         axs[0].set_title('Means')
         axs[1].set_title('Stdevs')
-        plt.legend(fc.L.range(self))
+        axs[0].set_xlabel("Batch")
+        axs[1].set_xlabel("Batch")
+        axs[0].set_ylabel("Mean Activation Value")
+        axs[1].set_ylabel("Standard Deviation of Activation Value")
+        plt.legend(fc.L.range(len(self)))
