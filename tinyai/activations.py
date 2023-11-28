@@ -42,7 +42,7 @@ class HooksCallback(Callback):
     def __init__(self, hookfunc, mod_filter=fc.noop, on_train=True, on_valid=False, mods=None):
         fc.store_attr()
         super().__init__()
-    
+
     def before_fit(self, learn):
         if self.mods: mods=self.mods
         else: mods = fc.filter_ex(learn.model.modules(), self.mod_filter)
@@ -72,7 +72,7 @@ def get_min(h):
     h1 = torch.stack(h.stats[2]).t().float()
     return h1[0]/h1.sum(0)
 
-# %% ../nbs/10_activations.ipynb 69
+# %% ../nbs/10_activations.ipynb 68
 class ActivationStats(HooksCallback):
     def __init__(self, mod_filter=fc.noop): super().__init__(append_stats, mod_filter)
 

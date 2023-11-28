@@ -3,7 +3,7 @@
 # %% auto 0
 __all__ = ['summary', 'show_image_batch', 'CapturePreds', 'capture_preds', 'rand_erase', 'RandErase', 'rand_copy', 'RandCopy']
 
-# %% ../nbs/14_augment.ipynb 2
+# %% ../nbs/14_augment.ipynb 3
 import torch,random
 import fastcore.all as fc
 
@@ -18,7 +18,7 @@ from .init import *
 from .sgd import *
 from .resnet import *
 
-# %% ../nbs/14_augment.ipynb 14
+# %% ../nbs/14_augment.ipynb 15
 def _flops(x, h, w):
     if x.dim()<3: return x.numel()
     if x.dim()==4: return x.numel()*h*w
@@ -42,14 +42,14 @@ def summary(self:Learner):
         return Markdown(res)
     else: print(res)
 
-# %% ../nbs/14_augment.ipynb 31
+# %% ../nbs/14_augment.ipynb 32
 @fc.patch
 @fc.delegates(show_images)
 def show_image_batch(self:Learner, max_n=9, cbs=None, **kwargs):
     self.fit(1, cbs=[SingleBatchCB()]+fc.L(cbs))
     show_images(self.batch[0][:max_n], **kwargs)
 
-# %% ../nbs/14_augment.ipynb 38
+# %% ../nbs/14_augment.ipynb 39
 class CapturePreds(Callback):
     def before_fit(self, learn): self.all_inps,self.all_preds,self.all_targs = [],[],[]
     def after_batch(self, learn):
@@ -59,7 +59,7 @@ class CapturePreds(Callback):
     def after_fit(self, learn):
         self.all_preds,self.all_targs,self.all_inps = map(torch.cat, [self.all_preds,self.all_targs,self.all_inps])
 
-# %% ../nbs/14_augment.ipynb 39
+# %% ../nbs/14_augment.ipynb 40
 @fc.patch
 def capture_preds(self: Learner, cbs=None, inps=False):
     cp = CapturePreds()
@@ -68,7 +68,7 @@ def capture_preds(self: Learner, cbs=None, inps=False):
     if inps: res = res+(cp.all_inps,)
     return res
 
-# %% ../nbs/14_augment.ipynb 54
+# %% ../nbs/14_augment.ipynb 56
 def _rand_erase1(x, pct, xm, xs, mn, mx):
     szx = int(pct*x.shape[-2])
     szy = int(pct*x.shape[-1])
@@ -77,7 +77,7 @@ def _rand_erase1(x, pct, xm, xs, mn, mx):
     init.normal_(x[:,:,stx:stx+szx,sty:sty+szy], mean=xm, std=xs)
     x.clamp_(mn, mx)
 
-# %% ../nbs/14_augment.ipynb 57
+# %% ../nbs/14_augment.ipynb 60
 def rand_erase(x, pct=0.2, max_num = 4):
     xm,xs,mn,mx = x.mean(),x.std(),x.min(),x.max()
     num = random.randint(0, max_num)
@@ -85,14 +85,14 @@ def rand_erase(x, pct=0.2, max_num = 4):
 #     print(num)
     return x
 
-# %% ../nbs/14_augment.ipynb 59
+# %% ../nbs/14_augment.ipynb 62
 class RandErase(nn.Module):
     def __init__(self, pct=0.2, max_num=4):
         super().__init__()
         self.pct,self.max_num = pct,max_num
     def forward(self, x): return rand_erase(x, self.pct, self.max_num)
 
-# %% ../nbs/14_augment.ipynb 68
+# %% ../nbs/14_augment.ipynb 71
 def _rand_copy1(x, pct):
     szx = int(pct*x.shape[-2])
     szy = int(pct*x.shape[-1])
@@ -102,14 +102,14 @@ def _rand_copy1(x, pct):
     sty2 = int(random.random()*(1-pct)*x.shape[-1])
     x[:,:,stx1:stx1+szx,sty1:sty1+szy] = x[:,:,stx2:stx2+szx,sty2:sty2+szy]
 
-# %% ../nbs/14_augment.ipynb 70
+# %% ../nbs/14_augment.ipynb 73
 def rand_copy(x, pct=0.2, max_num = 4):
     num = random.randint(0, max_num)
     for i in range(num): _rand_copy1(x, pct)
 #     print(num)
     return x
 
-# %% ../nbs/14_augment.ipynb 72
+# %% ../nbs/14_augment.ipynb 75
 class RandCopy(nn.Module):
     def __init__(self, pct=0.2, max_num=4):
         super().__init__()
