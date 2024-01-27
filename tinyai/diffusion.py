@@ -5,13 +5,12 @@ __all__ = ['abar', 'inv_abar', 'noisify', 'collate_ddpm', 'dl_ddpm', 'timestep_e
            'SelfAttention', 'SelfAttention2D', 'EmbResBlock', 'saved', 'DownBlock', 'UpBlock', 'EmbUNetModel',
            'ddim_step', 'sample', 'cond_sample']
 
-# %% ../nbs/28_diffusion-attn-cond.ipynb 3
-from miniai.imports import *
-
+# %% ../nbs/28_diffusion-attn-cond.ipynb 2
+from .imports import *
 from einops import rearrange
 from fastprogress import progress_bar
 
-# %% ../nbs/28_diffusion-attn-cond.ipynb 6
+# %% ../nbs/28_diffusion-attn-cond.ipynb 5
 def abar(t): return (t*math.pi/2).cos()**2
 def inv_abar(x): return x.sqrt().acos()*2/math.pi
 
@@ -27,14 +26,14 @@ def noisify(x0):
 def collate_ddpm(b): return noisify(default_collate(b)[xl])
 def dl_ddpm(ds): return DataLoader(ds, batch_size=bs, collate_fn=collate_ddpm, num_workers=4)
 
-# %% ../nbs/28_diffusion-attn-cond.ipynb 10
+# %% ../nbs/28_diffusion-attn-cond.ipynb 9
 def timestep_embedding(tsteps, emb_dim, max_period= 10000):
     exponent = -math.log(max_period) * torch.linspace(0, 1, emb_dim//2, device=tsteps.device)
     emb = tsteps[:,None].float() * exponent.exp()[None,:]
     emb = torch.cat([emb.sin(), emb.cos()], dim=-1)
     return F.pad(emb, (0,1,0,0)) if emb_dim%2==1 else emb
 
-# %% ../nbs/28_diffusion-attn-cond.ipynb 11
+# %% ../nbs/28_diffusion-attn-cond.ipynb 10
 def pre_conv(ni, nf, ks=3, stride=1, act=nn.SiLU, norm=None, bias=True):
     layers = nn.Sequential()
     if norm: layers.append(norm(ni))
@@ -42,10 +41,10 @@ def pre_conv(ni, nf, ks=3, stride=1, act=nn.SiLU, norm=None, bias=True):
     layers.append(nn.Conv2d(ni, nf, stride=stride, kernel_size=ks, padding=ks//2, bias=bias))
     return layers
 
-# %% ../nbs/28_diffusion-attn-cond.ipynb 12
+# %% ../nbs/28_diffusion-attn-cond.ipynb 11
 def upsample(nf): return nn.Sequential(nn.Upsample(scale_factor=2.), nn.Conv2d(nf, nf, 3, padding=1))
 
-# %% ../nbs/28_diffusion-attn-cond.ipynb 13
+# %% ../nbs/28_diffusion-attn-cond.ipynb 12
 def lin(ni, nf, act=nn.SiLU, norm=None, bias=True):
     layers = nn.Sequential()
     if norm: layers.append(norm(ni))
@@ -53,7 +52,7 @@ def lin(ni, nf, act=nn.SiLU, norm=None, bias=True):
     layers.append(nn.Linear(ni, nf, bias=bias))
     return layers
 
-# %% ../nbs/28_diffusion-attn-cond.ipynb 15
+# %% ../nbs/28_diffusion-attn-cond.ipynb 14
 class SelfAttention(nn.Module):
     def __init__(self, ni, attn_chans, transpose=True):
         super().__init__()
@@ -78,13 +77,13 @@ class SelfAttention(nn.Module):
         if self.t: x = x.transpose(1, 2)
         return x
 
-# %% ../nbs/28_diffusion-attn-cond.ipynb 16
+# %% ../nbs/28_diffusion-attn-cond.ipynb 15
 class SelfAttention2D(SelfAttention):
     def forward(self, x):
         n,c,h,w = x.shape
         return super().forward(x.view(n, c, -1)).reshape(n,c,h,w)
 
-# %% ../nbs/28_diffusion-attn-cond.ipynb 17
+# %% ../nbs/28_diffusion-attn-cond.ipynb 16
 class EmbResBlock(nn.Module):
     def __init__(self, n_emb, ni, nf=None, ks=3, act=nn.SiLU, norm=nn.BatchNorm2d, attn_chans=0):
         super().__init__()
@@ -107,7 +106,7 @@ class EmbResBlock(nn.Module):
         if self.attn: x = x + self.attn(x)
         return x
 
-# %% ../nbs/28_diffusion-attn-cond.ipynb 18
+# %% ../nbs/28_diffusion-attn-cond.ipynb 17
 def saved(m, blk):
     m_ = m.forward
 
@@ -120,7 +119,7 @@ def saved(m, blk):
     m.forward = _f
     return m
 
-# %% ../nbs/28_diffusion-attn-cond.ipynb 19
+# %% ../nbs/28_diffusion-attn-cond.ipynb 18
 class DownBlock(nn.Module):
     def __init__(self, n_emb, ni, nf, add_down=True, num_layers=1, attn_chans=0):
         super().__init__()
@@ -134,7 +133,7 @@ class DownBlock(nn.Module):
         x = self.down(x)
         return x
 
-# %% ../nbs/28_diffusion-attn-cond.ipynb 20
+# %% ../nbs/28_diffusion-attn-cond.ipynb 19
 class UpBlock(nn.Module):
     def __init__(self, n_emb, ni, prev_nf, nf, add_up=True, num_layers=2, attn_chans=0):
         super().__init__()
@@ -147,7 +146,7 @@ class UpBlock(nn.Module):
         for resnet in self.resnets: x = resnet(torch.cat([x, ups.pop()], dim=1), t)
         return self.up(x)
 
-# %% ../nbs/28_diffusion-attn-cond.ipynb 21
+# %% ../nbs/28_diffusion-attn-cond.ipynb 20
 class EmbUNetModel(nn.Module):
     def __init__( self, in_channels=3, out_channels=3, nfs=(224,448,672,896), num_layers=1, attn_chans=8, attn_start=1):
         super().__init__()
@@ -188,7 +187,7 @@ class EmbUNetModel(nn.Module):
         for block in self.ups: x = block(x, emb, saved)
         return self.conv_out(x)
 
-# %% ../nbs/28_diffusion-attn-cond.ipynb 28
+# %% ../nbs/28_diffusion-attn-cond.ipynb 27
 def ddim_step(x_t, noise, abar_t, abar_t1, bbar_t, bbar_t1, eta, sig, clamp=True):
     sig = ((bbar_t1/bbar_t).sqrt() * (1-abar_t/abar_t1).sqrt()) * eta
     x_0_hat = ((x_t-(1-abar_t).sqrt()*noise) / abar_t.sqrt())
@@ -198,7 +197,7 @@ def ddim_step(x_t, noise, abar_t, abar_t1, bbar_t, bbar_t1, eta, sig, clamp=True
     x_t += sig * torch.randn(x_t.shape).to(x_t)
     return x_0_hat,x_t
 
-# %% ../nbs/28_diffusion-attn-cond.ipynb 29
+# %% ../nbs/28_diffusion-attn-cond.ipynb 28
 @torch.no_grad()
 def sample(f, model, sz, steps, eta=1., clamp=True):
     model.eval()
@@ -214,7 +213,7 @@ def sample(f, model, sz, steps, eta=1., clamp=True):
         preds.append(x_0_hat.float().cpu())
     return preds
 
-# %% ../nbs/28_diffusion-attn-cond.ipynb 43
+# %% ../nbs/28_diffusion-attn-cond.ipynb 42
 @torch.no_grad()
 def cond_sample(c, f, model, sz, steps, eta=1.):
     ts = torch.linspace(1-1/steps,0,steps)
