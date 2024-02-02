@@ -2,6 +2,15 @@
 
 a tiny framework build on top of PyTorch liblary, created during [fast.ai](https://course.fast.ai/) course.
 
+
+## Installation
+A way to install framework
+
+```bash
+git clone https://github.com/GalaxUniv/tinyai.git
+cd tinyai
+pip install -e .
+```
 ## List of Things in the Framework
 
 ### Callbacks
