@@ -89,6 +89,7 @@ class ActivationStats(HooksCallback):
             cbar = plt.colorbar(im, ax=ax)
             cbar.set_label("Frequency")
         plt.tight_layout()
+        return fig # Allows for logging
 
     def dead_chart(self, figsize=(11,5)):
         fig, axes = get_grid(len(self), figsize=figsize)
@@ -100,6 +101,7 @@ class ActivationStats(HooksCallback):
             ax.set_ylabel("Activation Value")
             ax.set_title(f"Layer {layer} Dead Activations")
         plt.tight_layout()
+        return fig # Allows for logging in wandb
 
     def plot_stats(self, figsize=(10,4)):
         fig, axs = plt.subplots(1,2, figsize=figsize)
@@ -113,3 +115,4 @@ class ActivationStats(HooksCallback):
         axs[0].set_ylabel("Mean Activation Value")
         axs[1].set_ylabel("Standard Deviation of Activation Value")
         plt.legend(fc.L.range(len(self)))
+        return fig # Allows for logging
