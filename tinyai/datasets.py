@@ -12,7 +12,7 @@ from torch.utils.data import default_collate
 from .training import *
 
 # %% auto 0
-__all__ = ['inplace', 'collate_dict', 'show_image', 'subplots', 'get_grid', 'show_images', 'DataLoaders']
+__all__ = ['inplace', 'collate_dict', 'show_image', 'subplots', 'get_grid', 'show_images', 'test_dls', 'DataLoaders']
 
 # %% ../nbs/05_datasets.ipynb 25
 def inplace(f):
@@ -101,10 +101,21 @@ def show_images(ims: list,  # Images to show
     for im, t, ax in zip_longest(ims, titles or [], axs): show_image(im, ax=ax, title=t)
 
 # %% ../nbs/05_datasets.ipynb 53
+def test_dls(train_ds, test_ds, bs, **kwargs):
+    test_dl = DataLoader(test_ds, batch_size=bs * 2, **kwargs)
+    train_dl,valid_dl = get_dls(train_ds,train_ds,bs)
+    return train_dl,valid_dl,test_dl
+
+# %% ../nbs/05_datasets.ipynb 55
 class DataLoaders:
-    def __init__(self, *dls): self.train, self.valid = dls[:2]
+    def __init__(self, *dls):
+        self.train, self.valid = dls[:2]
+        self.test = dls[2] if len(dls) > 2 else None
 
     @classmethod
     def from_dd(cls, dd, batch_size, as_tuple=True, **kwargs):
         f = collate_dict(dd['train'])
-        return cls(*get_dls(*dd.values(), bs=batch_size, collate_fn=f, **kwargs))
+        if 'test' in dd:
+            return cls(*test_dls(*dd.values(), bs=batch_size, collate_fn=f, **kwargs))
+        else:
+            return cls(*get_dls(dd['train'], dd['valid'], bs=batch_size, collate_fn=f, **kwargs))
